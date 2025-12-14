@@ -6,3 +6,13 @@ export const users = pgTable('users', {
   password: text('password').notNull(), // Trong thực tế nhớ mã hóa password!
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  imageUrl: text('image_url'), // Link ảnh minh họa
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+
