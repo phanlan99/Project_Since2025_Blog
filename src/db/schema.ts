@@ -11,10 +11,11 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
   avatarUrl: text('avatar_url'),
-  
-  // --- THÊM DÒNG NÀY ---
-  displayName: text('display_name'), // Tên hiển thị tự chọn
-  // --------------------
+  displayName: text('display_name'),
+
+  // --- THÊM DÒNG NÀY: Link ảnh bìa ---
+  coverImageUrl: text('cover_image_url'),
+  // ----------------------------------
 
   createdAt: timestamp('created_at').defaultNow(),
 });

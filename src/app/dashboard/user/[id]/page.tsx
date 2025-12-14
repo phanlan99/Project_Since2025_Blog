@@ -10,14 +10,12 @@ export default async function PublicProfilePage(props: { params: Promise<{ id: s
 
   if (isNaN(targetUserId)) return notFound();
 
-  // 1. Lấy thông tin người dùng (Target User)
   const userProfile = await db.query.users.findFirst({
     where: eq(users.id, targetUserId),
   });
 
   if (!userProfile) return <div>Người dùng không tồn tại</div>;
 
-  // 2. Lấy danh sách bài viết của người đó
   const userPosts = await db.query.posts.findMany({
     where: eq(posts.userId, targetUserId),
     orderBy: [desc(posts.createdAt)],
@@ -28,39 +26,59 @@ export default async function PublicProfilePage(props: { params: Promise<{ id: s
   });
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto mb-10">
       {/* --- PHẦN HEADER PROFILE --- */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-        <div className="h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-        <div className="px-8 pb-8 flex flex-col items-center -mt-16">
-          
-          {/* Avatar to */}
-          <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
-            {userProfile.avatarUrl ? (
-              <img src={userProfile.avatarUrl} alt="Avt" className="w-full h-full object-cover" />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative">
+
+        {/* Ảnh bìa (Cập nhật style chuẩn để không vỡ) */}
+        <div className="h-64 bg-gray-200 relative">
+            {userProfile.coverImageUrl ? (
+                 <img 
+                   src={userProfile.coverImageUrl} 
+                   alt="Cover" 
+                   className="w-full h-full object-cover absolute inset-0" 
+                 />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-500 text-4xl font-bold">
-                {(userProfile.displayName || userProfile.email)[0].toUpperCase()}
-              </div>
+                 <div className="w-full h-full bg-gradient-to-r from-blue-400 to-indigo-500 absolute inset-0"></div>
             )}
+             <div className="absolute inset-0 bg-black/10"></div>
+        </div>
+
+        {/* --- SỬA Ở ĐÂY: Thêm pt-24 để tạo khoảng trống cho Avatar --- */}
+        <div className="px-8 pb-8 pt-24 relative">
+        {/* ----------------------------------------------------------- */}
+
+           {/* Avatar - Đẩy lên trên ảnh bìa */}
+          <div className="absolute -top-16 left-8">
+            <div className="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-md">
+                {userProfile.avatarUrl ? (
+                <img src={userProfile.avatarUrl} alt="Avt" className="w-full h-full object-cover" />
+                ) : (
+                <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-500 text-4xl font-bold">
+                    {(userProfile.displayName || userProfile.email)[0].toUpperCase()}
+                </div>
+                )}
+            </div>
           </div>
 
-          {/* Tên và Email */}
-          <h1 className="mt-4 text-3xl font-bold text-gray-900">
-            {userProfile.displayName || userProfile.email}
-          </h1>
-          {userProfile.displayName && (
-              <p className="text-gray-500">{userProfile.email}</p>
-          )}
-          
-          <div className="mt-4 flex gap-4 text-sm text-gray-600">
-              <span>📅 Tham gia: {userProfile.createdAt?.toLocaleDateString('vi-VN')}</span>
-              <span>📝 <b>{userPosts.length}</b> bài viết</span>
+          {/* Thông tin - BỎ class mt-20 đi */}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 line-clamp-1">
+                {userProfile.displayName || userProfile.email}
+            </h1>
+            {userProfile.displayName && (
+                <p className="text-gray-500">{userProfile.email}</p>
+            )}
+
+            <div className="mt-4 flex gap-4 text-sm text-gray-600">
+                <span>📅 Tham gia: {userProfile.createdAt?.toLocaleDateString('vi-VN')}</span>
+                <span>📝 <b>{userPosts.length}</b> bài viết</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* --- DANH SÁCH BÀI VIẾT CỦA HỌ --- */}
+      {/* --- DANH SÁCH BÀI VIẾT --- */}
       <h2 className="text-xl font-bold text-gray-800 mb-4">Bài viết đã đăng</h2>
       
       {userPosts.length === 0 ? (
@@ -70,7 +88,6 @@ export default async function PublicProfilePage(props: { params: Promise<{ id: s
             {userPosts.map((post) => (
                 <Link key={post.id} href={`/dashboard/posts/${post.id}`} className="block group">
                     <div className="bg-white rounded-lg shadow border border-transparent group-hover:border-indigo-400 transition overflow-hidden h-full flex flex-col">
-                        {/* Ảnh bìa bài viết */}
                         <div className="h-48 bg-gray-200 w-full relative">
                             {post.imageUrl ? (
                                 <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
