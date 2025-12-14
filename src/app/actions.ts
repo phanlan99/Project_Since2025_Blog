@@ -20,9 +20,11 @@ export async function loginAction(formData: FormData) {
     return { error: 'Email hoặc mật khẩu không đúng' };
   }
 
-  // --- SỬA ĐOẠN NÀY ---
-  // cookies() trả về Promise, nên phải dùng await
-  const cookieStore = await cookies(); 
+  /// --- SỬA ĐOẠN NÀY ---
+  const cookieStore = await cookies();
+  
+  // Lưu ID người dùng vào cookie để dùng sau này
+  cookieStore.set('userId', user[0].id.toString(), { httpOnly: true }); 
   cookieStore.set('isLoggedIn', 'true', { httpOnly: true });
   // --------------------
 

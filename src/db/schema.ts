@@ -13,7 +13,9 @@ export const posts = pgTable('posts', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   content: text('content').notNull(),
-  imageUrl: text('image_url'), // Link ảnh minh họa
+  imageUrl: text('image_url'),
+  // THÊM DÒNG NÀY: Liên kết với bảng users
+  userId: integer('user_id').references(() => users.id), 
   createdAt: timestamp('created_at').defaultNow(),
 });
 
