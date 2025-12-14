@@ -1,6 +1,7 @@
 import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { integer } from 'drizzle-orm/pg-core'; // Nhớ thêm import integer
 import { relations } from 'drizzle-orm';
+import { boolean } from 'drizzle-orm/pg-core'; // Nhớ thêm import boolean
 
 
 // --- BẢNG USERS ---
@@ -67,3 +68,19 @@ export const products = pgTable('products', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(), // Người nhận thông báo
+  message: text('message').notNull(), // Nội dung: "A đã bình luận..."
+  link: text('link'), // Link để bấm vào (ví dụ về trang dashboard)
+  isRead: boolean('is_read').default(false), // Đã đọc hay chưa
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Quan hệ: 1 User có nhiều Notification
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
