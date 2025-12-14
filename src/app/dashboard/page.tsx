@@ -4,7 +4,7 @@ import { togglePostLike } from './like-actions';
 import { cookies } from 'next/headers';
 import CommentItem from './CommentItem';
 
-  
+
 
 
 export default async function DashboardPage() {
@@ -68,12 +68,11 @@ export default async function DashboardPage() {
                 {/* ------------------------------- */}
 
                 <div className="ml-3">
+                  {/* SỬA DÒNG NÀY */}
                   <p className="text-sm font-bold text-gray-900">
-                    {post.author?.email}
+                    {post.author?.displayName || post.author?.email}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {post.createdAt?.toLocaleString('vi-VN')}
-                  </p>
+                  <p className="text-xs text-gray-500">{post.createdAt?.toLocaleString('vi-VN')}</p>
                 </div>
               </div>
 
@@ -99,11 +98,10 @@ export default async function DashboardPage() {
                   <input type="hidden" name="postId" value={post.id} />
                   <button
                     type="submit"
-                    className={`flex items-center gap-1 text-sm font-medium transition ${
-                      isPostLiked
+                    className={`flex items-center gap-1 text-sm font-medium transition ${isPostLiked
                         ? 'text-red-500'
                         : 'text-gray-500 hover:text-red-500'
-                    }`}
+                      }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

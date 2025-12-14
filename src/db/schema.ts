@@ -6,14 +6,14 @@ import { AnyPgColumn } from 'drizzle-orm/pg-core'; // Thêm import này nếu c�
 
 
 
-// --- BẢNG USERS ---
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
+  avatarUrl: text('avatar_url'),
   
   // --- THÊM DÒNG NÀY ---
-  avatarUrl: text('avatar_url'), // Lưu link ảnh (http://...)
+  displayName: text('display_name'), // Tên hiển thị tự chọn
   // --------------------
 
   createdAt: timestamp('created_at').defaultNow(),
