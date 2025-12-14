@@ -2,10 +2,10 @@ import { db } from '@/db';
 import { posts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { addCommentAction } from '../../comment-action'; // Lưu ý đường dẫn ../
-import { togglePostLike } from '../../like-actions';   // Import action like post
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import CommentItem from '../../CommentItem'; // Import component hiển thị bình luận (đường dẫn ../../)
+import CommentItem from '../../CommentItem'; // Đường dẫn ../../
+import PostLikeControl from '../../PostLikeControl'; // <--- Import Component mới (lùi 2 cấp)
 
 export default async function PostDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -17,16 +17,28 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
 
     if (isNaN(postId)) return <div>Bài viết không tồn tại</div>;
 
-    // 2. Lấy dữ liệu bài viết (Kèm Likes và Comments + Likes của Comment)
+    // 2. Lấy dữ liệu bài viết
     const post = await db.query.posts.findFirst({
         where: eq(posts.id, postId),
         with: {
             author: true,
-            likes: true, // Lấy danh sách like bài viết
+            
+            // Lấy thông tin user trong likes bài viết
+            likes: {
+                with: {
+                    user: true
+                }
+            },
+
             comments: {
                 with: {
                     author: true,
-                    likes: true // Lấy danh sách like comment
+                    // Lấy thông tin user trong likes bình luận
+                    likes: {
+                        with: {
+                            user: true
+                        }
+                    }
                 },
                 orderBy: (comments, { asc }) => [asc(comments.createdAt)],
             },
@@ -43,9 +55,6 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
             </div>
         );
     }
-
-    // Check xem user đã like bài viết này chưa
-    const isPostLiked = post.likes.some(like => like.userId === currentUserId);
 
     // Lọc ra các bình luận gốc (Cấp 1)
     const rootComments = post.comments.filter(c => c.parentId === null);
@@ -98,19 +107,13 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
                         <img src={post.imageUrl} alt={post.title} className="w-full rounded-lg object-cover mb-4" />
                     )}
 
-                    {/* Nút Like Bài Viết (Cập nhật mới) */}
-                    <form action={togglePostLike}>
-                        <input type="hidden" name="postId" value={post.id} />
-                        <button
-                            type="submit"
-                            className={`flex items-center gap-1 text-sm font-medium transition ${isPostLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill={isPostLiked ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                            </svg>
-                            {post.likes.length > 0 && <span>{post.likes.length} Thích</span>}
-                        </button>
-                    </form>
+                    {/* --- THAY THẾ FORM CŨ BẰNG COMPONENT POST LIKE CONTROL --- */}
+                    <PostLikeControl 
+                        postId={post.id} 
+                        likes={post.likes} 
+                        currentUserId={currentUserId} 
+                    />
+                    {/* --------------------------------------------------------- */}
                 </div>
 
                 {/* Khu vực Bình luận */}

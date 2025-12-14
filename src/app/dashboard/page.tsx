@@ -1,9 +1,9 @@
 import { db } from '@/db';
 import { addCommentAction } from './comment-action';
-import { togglePostLike } from './like-actions';
 import { cookies } from 'next/headers';
 import CommentItem from './CommentItem';
-import Link from 'next/link'; // Đã thêm import Link
+import Link from 'next/link';
+import PostLikeControl from './PostLikeControl'; // <--- Import Component mới
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -12,12 +12,24 @@ export default async function DashboardPage() {
   const allPosts = await db.query.posts.findMany({
     orderBy: (posts, { desc }) => [desc(posts.createdAt)],
     with: {
-      author: true, // Đã bao gồm avatarUrl, id, displayName, email
-      likes: true,
+      author: true,
+      
+      // Lấy thông tin user trong likes bài viết
+      likes: {
+        with: {
+          user: true,
+        },
+      },
+
       comments: {
         with: {
           author: true,
-          likes: true,
+          // Lấy thông tin user trong likes bình luận
+          likes: {
+            with: {
+              user: true,
+            },
+          },
         },
         orderBy: (comments, { asc }) => [asc(comments.createdAt)],
       },
@@ -35,10 +47,6 @@ export default async function DashboardPage() {
 
       <div className="space-y-8">
         {allPosts.map((post) => {
-          const isPostLiked = post.likes.some(
-            (like) => like.userId === currentUserId
-          );
-
           // 🔹 Chỉ lấy comment gốc (không có parent)
           const rootComments = post.comments.filter(
             (comment) => comment.parentId === null
@@ -103,34 +111,13 @@ export default async function DashboardPage() {
                   />
                 )}
 
-                {/* LIKE POST */}
-                <form action={togglePostLike}>
-                  <input type="hidden" name="postId" value={post.id} />
-                  <button
-                    type="submit"
-                    className={`flex items-center gap-1 text-sm font-medium transition ${
-                      isPostLiked
-                        ? 'text-red-500'
-                        : 'text-gray-500 hover:text-red-500'
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill={isPostLiked ? 'currentColor' : 'none'}
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="w-6 h-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                      />
-                    </svg>
-                    {post.likes.length > 0 && <span>{post.likes.length}</span>}
-                  </button>
-                </form>
+                {/* --- LIKE CONTROL COMPONENT (MỚI) --- */}
+                <PostLikeControl 
+                  postId={post.id} 
+                  likes={post.likes} 
+                  currentUserId={currentUserId} 
+                />
+                {/* ------------------------------------ */}
               </div>
 
               {/* COMMENTS */}
