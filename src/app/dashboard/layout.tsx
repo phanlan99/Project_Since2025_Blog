@@ -40,7 +40,12 @@ export default async function DashboardLayout({
                         {/* ... Phần Logo và Menu trái giữ nguyên ... */}
                         <div className="flex">
                             <div className="flex-shrink-0 flex items-center">
-                                <span className="font-bold text-xl text-indigo-600">MyBrand</span>
+                                {/* BỌC THẺ LINK VÀO ĐÂY */}
+                                <Link href="/dashboard" className="cursor-pointer">
+                                    <span className="font-bold text-xl text-indigo-600 hover:text-indigo-800 transition">
+                                        MyBrand
+                                    </span>
+                                </Link>
                             </div>
                             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                                 <Link href="/dashboard" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
@@ -54,7 +59,7 @@ export default async function DashboardLayout({
                                 </Link>
                             </div>
                             {/* Copy lại đoạn Logo và Link trang chủ/sản phẩm cũ vào đây */}
-                            
+
                         </div>
 
                         <div className="flex items-center space-x-4">
