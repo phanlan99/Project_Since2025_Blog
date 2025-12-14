@@ -4,7 +4,7 @@ import { addCommentAction } from './comment-action'; // Import action vừa tạ
 import Image from 'next/image';
 
 export default async function DashboardPage() {
-  
+
   // Dùng db.query để lấy dữ liệu lồng nhau (Post -> Author, Post -> Comments -> Author)
   const allPosts = await db.query.posts.findMany({
     orderBy: (posts, { desc }) => [desc(posts.createdAt)], // Sắp xếp mới nhất
@@ -31,7 +31,7 @@ export default async function DashboardPage() {
       <div className="space-y-8">
         {allPosts.map((post) => (
           <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            
+
             {/* Header bài viết: Người đăng */}
             <div className="p-4 flex items-center border-b border-gray-50 bg-gray-50/50">
               <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
             <div className="p-4">
               <h2 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h2>
               <p className="text-gray-700 mb-4 whitespace-pre-wrap">{post.content}</p>
-              
+
               {post.imageUrl && (
                 <div className="mb-4 rounded-lg overflow-hidden border border-gray-100">
                   <img src={post.imageUrl} alt={post.title} className="w-full h-auto object-cover" />
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
 
             {/* --- KHU VỰC BÌNH LUẬN --- */}
             <div className="bg-gray-50 p-4 border-t border-gray-100">
-              
+
               {/* Danh sách các bình luận cũ */}
               {post.comments.length > 0 && (
                 <div className="space-y-3 mb-4">
@@ -82,19 +82,25 @@ export default async function DashboardPage() {
               )}
 
               {/* Form nhập bình luận mới */}
-              <form action={addCommentAction} className="flex gap-2">
+              <form
+                action={async (formData) => {
+                  "use server"
+                  await addCommentAction(formData)
+                }}
+                className="flex gap-2"
+              >
                 {/* Input ẩn để gửi ID bài viết */}
                 <input type="hidden" name="postId" value={post.id} />
-                
-                <input 
-                  name="content" 
-                  required 
+
+                <input
+                  name="content"
+                  required
                   autoComplete="off"
-                  placeholder="Viết bình luận..." 
+                  placeholder="Viết bình luận..."
                   className="flex-1 px-4 py-2 rounded-full border border-gray-300 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-indigo-700 transition"
                 >
                   Gửi
