@@ -3,7 +3,8 @@ import { addCommentAction } from './comment-action';
 import { cookies } from 'next/headers';
 import CommentItem from './CommentItem';
 import Link from 'next/link';
-import PostLikeControl from './PostLikeControl'; // <--- Import Component mới
+import PostLikeControl from './PostLikeControl';
+import ImageGrid from './ImageGrid'; // <--- 1. Import Component hiển thị ảnh
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -14,6 +15,10 @@ export default async function DashboardPage() {
     with: {
       author: true,
       
+      // --- 2. LẤY DANH SÁCH ẢNH ---
+      images: true, 
+      // ----------------------------
+
       // Lấy thông tin user trong likes bài viết
       likes: {
         with: {
@@ -103,21 +108,17 @@ export default async function DashboardPage() {
                   {post.content}
                 </p>
 
-                {post.imageUrl && (
-                  <img
-                    src={post.imageUrl}
-                    alt={post.title}
-                    className="w-full rounded-lg object-cover mb-4"
-                  />
-                )}
+                {/* --- 3. THAY THẾ IMG CŨ BẰNG IMAGE GRID --- */}
+                <ImageGrid images={post.images} />
+                {/* ------------------------------------------ */}
 
-                {/* --- LIKE CONTROL COMPONENT (MỚI) --- */}
+                {/* --- LIKE CONTROL COMPONENT --- */}
                 <PostLikeControl 
                   postId={post.id} 
                   likes={post.likes} 
                   currentUserId={currentUserId} 
                 />
-                {/* ------------------------------------ */}
+                {/* ------------------------------ */}
               </div>
 
               {/* COMMENTS */}

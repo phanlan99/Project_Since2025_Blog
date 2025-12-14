@@ -5,7 +5,8 @@ import { addCommentAction } from '../../comment-action'; // Lưu ý đường d�
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import CommentItem from '../../CommentItem'; // Đường dẫn ../../
-import PostLikeControl from '../../PostLikeControl'; // <--- Import Component mới (lùi 2 cấp)
+import PostLikeControl from '../../PostLikeControl'; // Đường dẫn ../../
+import ImageGrid from '../../ImageGrid'; // <--- 1. Import Component hiển thị ảnh (lùi 2 cấp)
 
 export default async function PostDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -22,6 +23,10 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
         where: eq(posts.id, postId),
         with: {
             author: true,
+            
+            // --- 2. LẤY DANH SÁCH ẢNH ---
+            images: true,
+            // ----------------------------
             
             // Lấy thông tin user trong likes bài viết
             likes: {
@@ -103,17 +108,18 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
                     <p className="text-gray-700 whitespace-pre-wrap leading-relaxed mb-6">
                         {post.content}
                     </p>
-                    {post.imageUrl && (
-                        <img src={post.imageUrl} alt={post.title} className="w-full rounded-lg object-cover mb-4" />
-                    )}
+                    
+                    {/* --- 3. THAY THẾ IMG CŨ BẰNG IMAGE GRID --- */}
+                    <ImageGrid images={post.images} />
+                    {/* ------------------------------------------ */}
 
-                    {/* --- THAY THẾ FORM CŨ BẰNG COMPONENT POST LIKE CONTROL --- */}
+                    {/* --- LIKE CONTROL COMPONENT --- */}
                     <PostLikeControl 
                         postId={post.id} 
                         likes={post.likes} 
                         currentUserId={currentUserId} 
                     />
-                    {/* --------------------------------------------------------- */}
+                    {/* ------------------------------ */}
                 </div>
 
                 {/* Khu vực Bình luận */}

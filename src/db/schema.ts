@@ -111,14 +111,35 @@ export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
 // --- 3. CẬP NHẬT QUAN HỆ CỦA BẢNG POSTS VÀ COMMENTS CŨ ---
 // (Bạn tìm đến đoạn postsRelations và commentsRelations cũ để THÊM dòng likes)
 
-export const postsRelations = relations(posts, ({ one, many }) => ({
-  author: one(users, { fields: [posts.userId], references: [users.id] }),
-  comments: many(comments),
-  likes: many(postLikes), // <--- THÊM DÒNG NÀY
-}));
+
 
 export const commentsRelations = relations(comments, ({ one, many }) => ({
   author: one(users, { fields: [comments.userId], references: [users.id] }),
   post: one(posts, { fields: [comments.postId], references: [posts.id] }),
   likes: many(commentLikes), // <--- THÊM DÒNG NÀY
+}));
+
+// --- 1. BẢNG MỚI: POST IMAGES ---
+export const postImages = pgTable('post_images', {
+  id: serial('id').primaryKey(),
+  postId: integer('post_id').references(() => posts.id).notNull(), // Thuộc về bài viết nào
+  url: text('url').notNull(), // Link ảnh
+});
+
+// --- 2. CẬP NHẬT QUAN HỆ (Relations) ---
+
+// Quan hệ cho bảng postImages
+export const postImagesRelations = relations(postImages, ({ one }) => ({
+  post: one(posts, {
+    fields: [postImages.postId],
+    references: [posts.id],
+  }),
+}));
+
+// Quan hệ cho bảng posts (Cập nhật cái cũ)
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  author: one(users, { fields: [posts.userId], references: [users.id] }),
+  comments: many(comments),
+  likes: many(postLikes),
+  images: many(postImages), // <--- THÊM DÒNG NÀY: Post có nhiều Image
 }));
