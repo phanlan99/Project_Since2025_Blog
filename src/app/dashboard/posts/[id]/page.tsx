@@ -63,14 +63,27 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
 
                 {/* Header */}
                 <div className="p-4 flex items-center border-b border-gray-50 bg-gray-50/50">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                        {post.author?.email?.[0].toUpperCase()}
-                    </div>
+                    
+                    {/* --- AVATAR CÓ LINK --- */}
+                    <Link href={`/dashboard/user/${post.author?.id}`}>
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-gray-200 cursor-pointer hover:opacity-80 transition">
+                            {post.author?.avatarUrl ? (
+                                <img src={post.author.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                post.author?.email?.[0].toUpperCase()
+                            )}
+                        </div>
+                    </Link>
+                    {/* ---------------------- */}
+
                     <div className="ml-3">
-                        {/* SỬA DÒNG NÀY */}
-                        <p className="text-sm font-bold text-gray-900">
-                            {post.author?.displayName || post.author?.email}
-                        </p>
+                         {/* --- TÊN CÓ LINK --- */}
+                        <Link href={`/dashboard/user/${post.author?.id}`} className="hover:underline">
+                            <p className="text-sm font-bold text-gray-900">
+                                {post.author?.displayName || post.author?.email}
+                            </p>
+                        </Link>
+                         {/* ------------------- */}
                         <p className="text-xs text-gray-500">{post.createdAt?.toLocaleString('vi-VN')}</p>
                     </div>
                 </div>
@@ -104,7 +117,7 @@ export default async function PostDetailPage(props: { params: Promise<{ id: stri
                 <div className="bg-gray-50 p-6 border-t border-gray-100">
                     <h3 className="font-bold text-gray-700 mb-4">Bình luận ({post.comments.length})</h3>
 
-                    {/* 3. Render danh sách bình luận bằng Component thông minh */}
+                    {/* Render danh sách bình luận bằng Component thông minh */}
                     <div className="space-y-4 mb-6">
                         {rootComments.map((comment) => (
                             <CommentItem

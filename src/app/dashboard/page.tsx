@@ -3,9 +3,7 @@ import { addCommentAction } from './comment-action';
 import { togglePostLike } from './like-actions';
 import { cookies } from 'next/headers';
 import CommentItem from './CommentItem';
-
-
-
+import Link from 'next/link'; // Đã thêm import Link
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -14,7 +12,7 @@ export default async function DashboardPage() {
   const allPosts = await db.query.posts.findMany({
     orderBy: (posts, { desc }) => [desc(posts.createdAt)],
     with: {
-      author: true, // Đã bao gồm avatarUrl
+      author: true, // Đã bao gồm avatarUrl, id, displayName, email
       likes: true,
       comments: {
         with: {
@@ -53,26 +51,38 @@ export default async function DashboardPage() {
             >
               {/* HEADER */}
               <div className="p-4 flex items-center border-b border-gray-50 bg-gray-50/50">
-                {/* --- PHẦN AVATAR (Logic mới) --- */}
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-gray-200">
-                  {post.author?.avatarUrl ? (
-                    <img
-                      src={post.author.avatarUrl}
-                      alt="Avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    post.author?.email?.[0].toUpperCase()
-                  )}
-                </div>
-                {/* ------------------------------- */}
+                
+                {/* --- AVATAR CÓ LINK --- */}
+                <Link href={`/dashboard/user/${post.author?.id}`}>
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-gray-200 cursor-pointer hover:opacity-80 transition">
+                    {post.author?.avatarUrl ? (
+                      <img
+                        src={post.author.avatarUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      post.author?.email?.[0].toUpperCase()
+                    )}
+                  </div>
+                </Link>
+                {/* ---------------------- */}
 
                 <div className="ml-3">
-                  {/* SỬA DÒNG NÀY */}
-                  <p className="text-sm font-bold text-gray-900">
-                    {post.author?.displayName || post.author?.email}
+                  {/* --- TÊN NGƯỜI ĐĂNG CÓ LINK --- */}
+                  <Link 
+                    href={`/dashboard/user/${post.author?.id}`} 
+                    className="hover:underline"
+                  >
+                    <p className="text-sm font-bold text-gray-900">
+                      {post.author?.displayName || post.author?.email}
+                    </p>
+                  </Link>
+                  {/* ------------------------------ */}
+                  
+                  <p className="text-xs text-gray-500">
+                    {post.createdAt?.toLocaleString('vi-VN')}
                   </p>
-                  <p className="text-xs text-gray-500">{post.createdAt?.toLocaleString('vi-VN')}</p>
                 </div>
               </div>
 
@@ -98,10 +108,11 @@ export default async function DashboardPage() {
                   <input type="hidden" name="postId" value={post.id} />
                   <button
                     type="submit"
-                    className={`flex items-center gap-1 text-sm font-medium transition ${isPostLiked
+                    className={`flex items-center gap-1 text-sm font-medium transition ${
+                      isPostLiked
                         ? 'text-red-500'
                         : 'text-gray-500 hover:text-red-500'
-                      }`}
+                    }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

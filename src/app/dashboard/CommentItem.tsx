@@ -1,18 +1,20 @@
 'use client'
 
 import { useState } from 'react';
+import Link from 'next/link'; // <--- Import Link
 import { addCommentAction } from './comment-action';
 import { toggleCommentLike } from './like-actions';
 
-// Cập nhật Type: Thêm avatarUrl và displayName vào author
+// Cập nhật Type: Thêm id vào author để dùng cho Link
 type CommentType = {
   id: number;
   content: string;
   createdAt: Date | null;
   author: { 
+    id: number; // <--- Thêm ID vào type (đảm bảo query DB đã lấy field này)
     email: string; 
     avatarUrl: string | null; 
-    displayName: string | null; // <--- Đã thêm dòng này
+    displayName: string | null;
   } | null;
   likes: { userId: number }[];
   parentId: number | null;
@@ -40,28 +42,34 @@ export default function CommentItem({
   return (
     <div className="flex gap-3 group">
       
-      {/* --- PHẦN AVATAR --- */}
-      <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden border border-gray-100">
-        {comment.author?.avatarUrl ? (
-          // Nếu có link ảnh -> Hiển thị ảnh
-          <img 
-            src={comment.author.avatarUrl} 
-            alt="Avt" 
-            className="w-full h-full object-cover" 
-          />
-        ) : (
-          // Nếu không có -> Hiển thị chữ cái đầu của Tên hiển thị hoặc Email
-          authorName?.[0].toUpperCase()
-        )}
-      </div>
-      {/* ------------------- */}
+      {/* --- PHẦN AVATAR (CÓ LINK) --- */}
+      <Link href={`/dashboard/user/${comment.author?.id}`} className="flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden border border-gray-100 cursor-pointer hover:opacity-80 transition">
+          {comment.author?.avatarUrl ? (
+            // Nếu có link ảnh -> Hiển thị ảnh
+            <img 
+              src={comment.author.avatarUrl} 
+              alt="Avt" 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            // Nếu không có -> Hiển thị chữ cái đầu
+            authorName?.[0].toUpperCase()
+          )}
+        </div>
+      </Link>
+      {/* ----------------------------- */}
 
       <div className="flex-1">
         <div className="bg-white p-2.5 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 inline-block pr-8 relative">
-          {/* Hiển thị tên người comment */}
-          <span className="text-xs font-bold text-gray-900 block">
-            {authorName}
-          </span>
+          
+          {/* --- TÊN NGƯỜI COMMENT (CÓ LINK) --- */}
+          <Link href={`/dashboard/user/${comment.author?.id}`} className="hover:underline">
+            <span className="text-xs font-bold text-gray-900 block">
+              {authorName}
+            </span>
+          </Link>
+          {/* ----------------------------------- */}
           
           <span className="text-sm text-gray-700">{comment.content}</span>
 
