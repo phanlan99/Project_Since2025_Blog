@@ -1,7 +1,8 @@
-import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
-import { integer } from 'drizzle-orm/pg-core'; // Nhớ thêm import integer
+
 import { relations } from 'drizzle-orm';
 import { boolean } from 'drizzle-orm/pg-core'; // Nhớ thêm import boolean
+import { pgTable, serial, text, timestamp, integer, primaryKey } from 'drizzle-orm/pg-core';
+
 
 
 // --- BẢNG USERS ---
@@ -28,14 +29,6 @@ export const posts = pgTable('posts', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-// Quan hệ: 1 Post thuộc về 1 User và có nhiều Comment
-export const postsRelations = relations(posts, ({ one, many }) => ({
-  author: one(users, {
-    fields: [posts.userId],
-    references: [users.id],
-  }),
-  comments: many(comments),
-}));
 
 // --- BẢNG COMMENTS (MỚI) ---
 export const comments = pgTable('comments', {
@@ -46,17 +39,7 @@ export const comments = pgTable('comments', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-// Quan hệ: 1 Comment thuộc về 1 User và 1 Post
-export const commentsRelations = relations(comments, ({ one }) => ({
-  author: one(users, {
-    fields: [comments.userId],
-    references: [users.id],
-  }),
-  post: one(posts, {
-    fields: [comments.postId],
-    references: [posts.id],
-  }),
-}));
+
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -83,4 +66,48 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     fields: [notifications.userId],
     references: [users.id],
   }),
+}));
+
+// --- 1. BẢNG LIKE BÀI VIẾT ---
+export const postLikes = pgTable('post_likes', {
+  userId: integer('user_id').references(() => users.id).notNull(),
+  postId: integer('post_id').references(() => posts.id).notNull(),
+}, (t) => ({
+  // Khóa chính phức hợp: Đảm bảo 1 user chỉ like 1 bài viết được 1 lần
+  pk: primaryKey({ columns: [t.userId, t.postId] }),
+}));
+
+// Quan hệ cho Post Likes
+export const postLikesRelations = relations(postLikes, ({ one }) => ({
+  user: one(users, { fields: [postLikes.userId], references: [users.id] }),
+  post: one(posts, { fields: [postLikes.postId], references: [posts.id] }),
+}));
+
+// --- 2. BẢNG LIKE BÌNH LUẬN ---
+export const commentLikes = pgTable('comment_likes', {
+  userId: integer('user_id').references(() => users.id).notNull(),
+  commentId: integer('comment_id').references(() => comments.id).notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.commentId] }),
+}));
+
+// Quan hệ cho Comment Likes
+export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
+  user: one(users, { fields: [commentLikes.userId], references: [users.id] }),
+  comment: one(comments, { fields: [commentLikes.commentId], references: [comments.id] }),
+}));
+
+// --- 3. CẬP NHẬT QUAN HỆ CỦA BẢNG POSTS VÀ COMMENTS CŨ ---
+// (Bạn tìm đến đoạn postsRelations và commentsRelations cũ để THÊM dòng likes)
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  author: one(users, { fields: [posts.userId], references: [users.id] }),
+  comments: many(comments),
+  likes: many(postLikes), // <--- THÊM DÒNG NÀY
+}));
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  author: one(users, { fields: [comments.userId], references: [users.id] }),
+  post: one(posts, { fields: [comments.postId], references: [posts.id] }),
+  likes: many(commentLikes), // <--- THÊM DÒNG NÀY
 }));
