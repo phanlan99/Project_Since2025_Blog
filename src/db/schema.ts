@@ -2,6 +2,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean } from 'drizzle-orm/pg-core'; // Nhớ thêm import boolean
 import { pgTable, serial, text, timestamp, integer, primaryKey } from 'drizzle-orm/pg-core';
+import { AnyPgColumn } from 'drizzle-orm/pg-core'; // Thêm import này nếu cần type
 
 
 
@@ -30,12 +31,16 @@ export const posts = pgTable('posts', {
 });
 
 
-// --- BẢNG COMMENTS (MỚI) ---
 export const comments = pgTable('comments', {
   id: serial('id').primaryKey(),
   content: text('content').notNull(),
-  userId: integer('user_id').references(() => users.id).notNull(), // Ai bình luận?
-  postId: integer('post_id').references(() => posts.id).notNull(), // Bình luận bài nào?
+  userId: integer('user_id').references(() => users.id).notNull(),
+  postId: integer('post_id').references(() => posts.id).notNull(),
+  
+  // --- THÊM DÒNG NÀY: Lưu ID của bình luận cha (nếu có) ---
+  parentId: integer('parent_id'), 
+  // --------------------------------------------------------
+
   createdAt: timestamp('created_at').defaultNow(),
 });
 
