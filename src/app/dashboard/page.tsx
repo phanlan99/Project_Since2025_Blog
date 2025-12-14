@@ -1,60 +1,110 @@
 import { db } from '@/db';
-import { posts } from '@/db/schema';
 import { desc } from 'drizzle-orm';
-import Image from 'next/image'; // Dùng thẻ Image của Next.js cho tối ưu
+import { addCommentAction } from './comment-action'; // Import action vừa tạo
+import Image from 'next/image';
 
-// Component này là Server Component (mặc định), nên có thể gọi DB trực tiếp
 export default async function DashboardPage() {
   
-  // Lấy danh sách bài viết, sắp xếp mới nhất lên đầu
-  const latestPosts = await db.select().from(posts).orderBy(desc(posts.createdAt));
+  // Dùng db.query để lấy dữ liệu lồng nhau (Post -> Author, Post -> Comments -> Author)
+  const allPosts = await db.query.posts.findMany({
+    orderBy: (posts, { desc }) => [desc(posts.createdAt)], // Sắp xếp mới nhất
+    with: {
+      author: true, // Lấy thông tin người đăng bài
+      comments: {
+        with: {
+          author: true, // Lấy thông tin người bình luận
+        },
+        orderBy: (comments, { asc }) => [asc(comments.createdAt)] // Bình luận cũ ở trên
+      },
+    },
+  });
 
   return (
-    <div>
-      {/* Banner chào mừng */}
+    <div className="max-w-3xl mx-auto">
+      {/* Banner */}
       <div className="bg-indigo-600 rounded-lg shadow-lg p-6 mb-8 text-white">
-        <h1 className="text-3xl font-bold">Xin chào! 👋</h1>
-        <p className="mt-2 text-indigo-100">Chào mừng bạn quay trở lại trang quản trị.</p>
+        <h1 className="text-3xl font-bold">Bảng tin cộng đồng 📢</h1>
+        <p className="mt-2 text-indigo-100">Cùng thảo luận và chia sẻ quan điểm nhé!</p>
       </div>
 
-      {/* Phần: Các bài đăng mới nhất */}
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Các bài đăng mới nhất</h2>
-
-      {latestPosts.length === 0 ? (
-        <p className="text-gray-500">Chưa có bài đăng nào.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestPosts.map((post) => (
-            <div key={post.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow">
-              {/* Ảnh bài viết */}
-              <div className="h-48 w-full relative bg-gray-200">
-                {post.imageUrl ? (
-                   // Lưu ý: Để dùng External Image (như picsum), cần cấu hình next.config.ts. 
-                   // Tạm thời dùng thẻ img thường cho đơn giản nhé.
-                   <img 
-                     src={post.imageUrl} 
-                     alt={post.title} 
-                     className="w-full h-full object-cover"
-                   />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
-                )}
+      {/* Danh sách bài viết */}
+      <div className="space-y-8">
+        {allPosts.map((post) => (
+          <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            
+            {/* Header bài viết: Người đăng */}
+            <div className="p-4 flex items-center border-b border-gray-50 bg-gray-50/50">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                {post.author?.email?.[0].toUpperCase() || 'U'}
               </div>
-              
-              {/* Nội dung bài viết */}
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h3>
-                <p className="text-gray-600 text-sm line-clamp-3">
-                  {post.content}
+              <div className="ml-3">
+                <p className="text-sm font-bold text-gray-900">{post.author?.email}</p>
+                <p className="text-xs text-gray-500">
+                  {post.createdAt?.toLocaleString('vi-VN')}
                 </p>
-                <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
-                  Đăng ngày: {post.createdAt?.toLocaleDateString('vi-VN')}
-                </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            {/* Nội dung bài viết */}
+            <div className="p-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h2>
+              <p className="text-gray-700 mb-4 whitespace-pre-wrap">{post.content}</p>
+              
+              {post.imageUrl && (
+                <div className="mb-4 rounded-lg overflow-hidden border border-gray-100">
+                  <img src={post.imageUrl} alt={post.title} className="w-full h-auto object-cover" />
+                </div>
+              )}
+            </div>
+
+            {/* --- KHU VỰC BÌNH LUẬN --- */}
+            <div className="bg-gray-50 p-4 border-t border-gray-100">
+              
+              {/* Danh sách các bình luận cũ */}
+              {post.comments.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  {post.comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3">
+                      {/* Avatar nhỏ */}
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">
+                        {comment.author?.email?.[0].toUpperCase()}
+                      </div>
+                      {/* Nội dung bình luận */}
+                      <div className="bg-white p-2.5 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 flex-1">
+                        <span className="text-xs font-bold text-gray-900 block">
+                          {comment.author?.email}
+                        </span>
+                        <span className="text-sm text-gray-700">{comment.content}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Form nhập bình luận mới */}
+              <form action={addCommentAction} className="flex gap-2">
+                {/* Input ẩn để gửi ID bài viết */}
+                <input type="hidden" name="postId" value={post.id} />
+                
+                <input 
+                  name="content" 
+                  required 
+                  autoComplete="off"
+                  placeholder="Viết bình luận..." 
+                  className="flex-1 px-4 py-2 rounded-full border border-gray-300 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+                <button 
+                  type="submit" 
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-indigo-700 transition"
+                >
+                  Gửi
+                </button>
+              </form>
+            </div>
+
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
