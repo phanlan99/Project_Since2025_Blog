@@ -11,6 +11,11 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   password: text('password').notNull(),
+  
+  // --- THÊM DÒNG NÀY ---
+  avatarUrl: text('avatar_url'), // Lưu link ảnh (http://...)
+  // --------------------
+
   createdAt: timestamp('created_at').defaultNow(),
 });
 

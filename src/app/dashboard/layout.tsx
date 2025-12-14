@@ -4,111 +4,191 @@ import { redirect } from 'next/navigation';
 import { notifications } from '@/db/schema'; // Import bảng
 import { count, eq, and } from 'drizzle-orm'; // Import hàm count, and
 import { db } from '@/db';
+import { users } from '@/db/schema'; // Import bảng users
+
 
 
 export default async function DashboardLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    const cookieStore = await cookies();
-    const isLoggedIn = cookieStore.get('isLoggedIn');
-    const userId = cookieStore.get('userId')?.value; // Lấy ID người đang đăng nhập
+  const cookieStore = await cookies();
+  const isLoggedIn = cookieStore.get('isLoggedIn');
+  const userId = cookieStore.get('userId')?.value;
 
-    if (!isLoggedIn) redirect('/');
+  if (!isLoggedIn) redirect('/');
 
-    // --- LẤY SỐ THÔNG BÁO CHƯA ĐỌC ---
-    let unreadCount = 0;
-    if (userId) {
-        const result = await db
-            .select({ value: count() })
-            .from(notifications)
-            .where(and(
-                eq(notifications.userId, parseInt(userId)),
-                eq(notifications.isRead, false)
-            ));
-        unreadCount = result[0].value;
-    }
-    // ----------------------------------
+  // --- LẤY THÔNG TIN USER (AVATAR / EMAIL) ---
+  let currentUser = null;
+  if (userId) {
+    currentUser = await db.query.users.findFirst({
+      where: eq(users.id, parseInt(userId)),
+    });
+  }
+  // ------------------------------------------
 
-    return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <nav className="bg-white shadow-sm flex-shrink-0">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16">
+  // --- LẤY SỐ THÔNG BÁO CHƯA ĐỌC ---
+  let unreadCount = 0;
+  if (userId) {
+    const result = await db
+      .select({ value: count() })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, parseInt(userId)),
+          eq(notifications.isRead, false)
+        )
+      );
 
-                        {/* ... Phần Logo và Menu trái giữ nguyên ... */}
-                        <div className="flex">
-                            <div className="flex-shrink-0 flex items-center">
-                                {/* BỌC THẺ LINK VÀO ĐÂY */}
-                                <Link href="/dashboard" className="cursor-pointer">
-                                    <span className="font-bold text-xl text-indigo-600 hover:text-indigo-800 transition">
-                                        MyBrand
-                                    </span>
-                                </Link>
-                            </div>
-                            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                                <Link href="/dashboard" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                                    Trang chủ
-                                </Link>
-                                <Link href="/dashboard/about" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                                    Giới thiệu
-                                </Link>
-                                <Link href="/dashboard/products" className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                                    Sản phẩm
-                                </Link>
-                            </div>
-                            {/* Copy lại đoạn Logo và Link trang chủ/sản phẩm cũ vào đây */}
+    unreadCount = result[0].value;
+  }
+  // ----------------------------------
 
-                        </div>
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <nav className="bg-white shadow-sm flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
 
-                        <div className="flex items-center space-x-4">
+            {/* LOGO + MENU TRÁI */}
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Link href="/dashboard" className="cursor-pointer">
+                  <span className="font-bold text-xl text-indigo-600 hover:text-indigo-800 transition">
+                    MyBrand
+                  </span>
+                </Link>
+              </div>
 
-                            {/* --- BIỂU TƯỢNG CÁI CHUÔNG (MỚI) --- */}
-                            <Link href="/dashboard/notifications" className="relative p-2 text-gray-400 hover:text-gray-500">
-                                <span className="sr-only">View notifications</span>
-                                {/* Icon cái chuông */}
-                                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link
+                  href="/dashboard"
+                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Trang chủ
+                </Link>
+                <Link
+                  href="/dashboard/about"
+                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Giới thiệu
+                </Link>
+                <Link
+                  href="/dashboard/products"
+                  className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Sản phẩm
+                </Link>
+              </div>
+            </div>
 
-                                {/* Badge số lượng (Chỉ hiện khi > 0) */}
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
-                                        {unreadCount}
-                                    </span>
-                                )}
-                            </Link>
-                            {/* ------------------------------------ */}
+            {/* PHẦN PHẢI */}
+            <div className="flex items-center space-x-4">
 
-                            <Link
-                                href="/dashboard/my-posts"
-                                className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-2 rounded-md text-sm font-medium transition"
-                            >
-                                Quản lý bài đăng
-                            </Link>
-                            <form action={async () => {
-                                'use server';
-                                const c = await cookies();
-                                c.delete('isLoggedIn');
-                                redirect('/');
-                            }}>
-                                <button type="submit" className="text-sm text-red-600 hover:text-red-800 font-medium">
-                                    Đăng xuất
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+              {/* CHUÔNG THÔNG BÁO */}
+              <Link
+                href="/dashboard/notifications"
+                className="relative p-2 text-gray-400 hover:text-gray-500"
+              >
+                <svg
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
 
-            {/* ... Phần Main và Footer giữ nguyên ... */}
-            <main className="flex-grow max-w-7xl w-full mx-auto py-6 sm:px-6 lg:px-8">
-                {children}
-            </main>
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-600 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </Link>
 
-            {/* --- FOOTER (MỚI THÊM VÀO) --- */}
-            <footer className="bg-gray-900 text-gray-300 mt-auto">
+              <Link
+                href="/dashboard/my-posts"
+                className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-2 rounded-md text-sm font-medium transition"
+              >
+                Quản lý bài đăng
+              </Link>
+
+              {/* PROFILE + LOGOUT */}
+              <div className="flex items-center gap-3 pl-4 border-l border-gray-200 ml-2">
+
+                {/* AVATAR */}
+                <Link
+                  href="/dashboard/profile"
+                  className="flex items-center gap-2 group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-300 group-hover:border-indigo-500 transition">
+                    {currentUser?.avatarUrl ? (
+                      <img
+                        src={currentUser.avatarUrl}
+                        alt="User"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500 bg-gray-100">
+                        {currentUser?.email?.[0].toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+
+                  <span className="text-sm font-medium text-gray-700 hidden md:block max-w-[120px] truncate">
+                    {currentUser?.email}
+                  </span>
+                </Link>
+
+                {/* LOGOUT ICON */}
+                <form
+                  action={async () => {
+                    'use server';
+                    const c = await cookies();
+                    c.delete('isLoggedIn');
+                    c.delete('userId');
+                    redirect('/');
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="text-gray-400 hover:text-red-600 p-1"
+                    title="Đăng xuất"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+                      />
+                    </svg>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="flex-grow max-w-7xl w-full mx-auto py-6 sm:px-6 lg:px-8">
+        {children}
+      </main>
+
+      <footer className="bg-gray-900 text-gray-300 mt-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 
@@ -168,6 +248,10 @@ export default async function DashboardLayout({
                     </div>
                 </div>
             </footer>
-        </div>
-    );
+    </div>
+  );
 }
+
+
+
+

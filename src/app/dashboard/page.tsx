@@ -4,6 +4,9 @@ import { togglePostLike } from './like-actions';
 import { cookies } from 'next/headers';
 import CommentItem from './CommentItem';
 
+  
+
+
 export default async function DashboardPage() {
   const cookieStore = await cookies();
   const currentUserId = Number(cookieStore.get('userId')?.value || 0);
@@ -11,7 +14,7 @@ export default async function DashboardPage() {
   const allPosts = await db.query.posts.findMany({
     orderBy: (posts, { desc }) => [desc(posts.createdAt)],
     with: {
-      author: true,
+      author: true, // Đã bao gồm avatarUrl
       likes: true,
       comments: {
         with: {
@@ -50,9 +53,20 @@ export default async function DashboardPage() {
             >
               {/* HEADER */}
               <div className="p-4 flex items-center border-b border-gray-50 bg-gray-50/50">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                  {post.author?.email?.[0].toUpperCase()}
+                {/* --- PHẦN AVATAR (Logic mới) --- */}
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-gray-200">
+                  {post.author?.avatarUrl ? (
+                    <img
+                      src={post.author.avatarUrl}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    post.author?.email?.[0].toUpperCase()
+                  )}
                 </div>
+                {/* ------------------------------- */}
+
                 <div className="ml-3">
                   <p className="text-sm font-bold text-gray-900">
                     {post.author?.email}
